@@ -12,7 +12,7 @@ what is your favorite food?
 
 pizza
 burritos
-
+sushi
 
 ```{r}
 
