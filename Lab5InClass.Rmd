@@ -1,0 +1,25 @@
+---
+title: "Final Project"
+author: "Iman Byndloss, Brock Keller, and Rachel Williams"
+date: "2025-02-12"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(here)
+library(dplyr)
+library(tidyverse)
+library(moments)
+library(ggplot2)
+library(lubridate)
+library(readxl)
+library(FSA)
+```
+
+
+```{r}
+#NC air data from EPA
+Air_Data_NC <- read.csv("NC_Air_Data_Project.csv")
+```
+
