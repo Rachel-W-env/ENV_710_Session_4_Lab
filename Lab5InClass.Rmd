@@ -7,6 +7,14 @@ output: pdf_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(here)
+library(dplyr)
+library(tidyverse)
+library(moments)
+library(ggplot2)
+library(lubridate)
+library(readxl)
+library(FSA)
 ```
 what is your favorite food? 
 
@@ -15,6 +23,8 @@ burritos
 sushi
 
 ```{r}
+#NC air data from EPA
+Air_Data_NC <- read.csv("NC_Air_Data_Project.csv")
 
 ```
 
