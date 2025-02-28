@@ -16,15 +16,10 @@ library(lubridate)
 library(readxl)
 library(FSA)
 ```
-what is your favorite food? 
 
-pizza
-burritos
-sushi
 
 ```{r}
 #NC air data from EPA
 Air_Data_NC <- read.csv("NC_Air_Data_Project.csv")
-
 ```
 
