@@ -1,6 +1,6 @@
 ---
-title: "Lab5"
-author: "Brock Keller"
+title: "Final Project"
+author: "Iman Byndloss, Brock Keller, and Rachel Williams"
 date: "2025-02-12"
 output: pdf_document
 ---
