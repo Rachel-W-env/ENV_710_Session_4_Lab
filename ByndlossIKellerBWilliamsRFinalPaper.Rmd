@@ -27,48 +27,61 @@ Air_Data_NC <- read.csv("NC_Air_Data_Project.csv")
 ```{r}
 #making a plot for first assignment
 #annual range in concentrations of select chemical in each site
-
+unique(Air_Data_NC$SITE_ID)
 #setting concentrations to be numeric
 
 Air_Data_NC <- Air_Data_NC %>% 
   mutate(across(c(Week, Year, Ca, Cl, HNO3, HNO3.PPB, K, Mg, Na, NH4, NO3, SO2, SO2.PPB, SO4, TNO3,), as.numeric))
 
-#filtering for just 2023
-Air_Data_2023 <- Air_Data_NC %>% 
-  filter(Year == "2023")
+#Changing SITE_ID to name of actual town
+Air_Data_NC <- Air_Data_NC %>% 
+  mutate(SITE_ID = case_when(
+    SITE_ID == "BFT142" ~ "Beaufort",
+    SITE_ID == "CND125" ~ "Candor",
+    SITE_ID == "COW137" ~ "Coweeta",
+    SITE_ID == "DUK008" ~ "Duke Forest",
+    SITE_ID == "PNF126" ~ "Cranberry"
+  ))
+
+
+#filtering for just 2022
+Air_Data_2022 <- Air_Data_NC %>% 
+  filter(Year == "2022")
 
 #checking how variables are stored. Looks good
-str(Air_Data_2023$SO4)
+str(Air_Data_2022$SO4)
+
 
 #grouping by SITE_ID and getting summary statistics
-Air_Summary_2023 <- Air_Data_2023 %>% 
+Air_Summary_2022_SO4 <- Air_Data_2022 %>% 
   group_by(SITE_ID) %>% 
   summarize(mean = mean(SO4, na.rm = TRUE),
             sd = sd(SO4, na.rm = TRUE)) %>% 
   ungroup()
 
 #making plot
-SO4_2023_plot <- ggplot()+
-  geom_errorbar(data = Air_Summary_2023, na.rm = TRUE,
+SO4_2022_plot <- ggplot()+
+  geom_errorbar(data = Air_Summary_2022_SO4, na.rm = TRUE,
                 aes(x = SITE_ID, 
                     ymin = mean - sd,
                     ymax = mean + sd,
                     color = SITE_ID),
                 width = 0.1, size = 1)+
-  geom_jitter(data = Air_Data_2023, na.rm = TRUE,
+  geom_jitter(data = Air_Data_2022, na.rm = TRUE,
               aes(x = SITE_ID, y = SO4, 
                   color = SITE_ID),
               alpha = 0.8, size = 0.5)+
-  geom_point(data = Air_Summary_2023, na.rm = TRUE,
+  geom_point(data = Air_Summary_2022_SO4, na.rm = TRUE,
              aes(x = SITE_ID, y = mean,
                  color = SITE_ID),
              SIZE = 3)+
-  labs(title = "Concentrations of SO4 by Site in 2023",
+  labs(title = "Concentrations of SO4 by Site in 2022",
        x = "Site",
-       y = "Weekly Mean SO4 Concentration (ug/m^3)")+
+       y = "Weekly Mean SO4 Concentration (ug/m^3)",
+       caption = "Figure 1: Figure showing mean weekly SO4 air concentration \n in 2022 across five EPA air monitoring sites in North Carolina")+
   theme_bw()
 
-print(SO4_2023_plot)
+print(SO4_2022_plot)
 
 ```
 
