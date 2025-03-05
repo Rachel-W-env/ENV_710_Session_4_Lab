@@ -65,7 +65,7 @@ SO4_2023_plot <- ggplot()+
              SIZE = 3)+
   labs(title = "Concentrations of SO4 by Site in 2023",
        x = "Site",
-       y = "SO4")+
+       y = "Weekly Mean SO4 Concentration (ug/m^3)")+
   theme_bw()
 
 print(SO4_2023_plot)
