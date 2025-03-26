@@ -102,7 +102,7 @@ Air_data_df <- as.data.frame(Air_Data_NC)
 Air_data_df$Year <- as.numeric(Air_data_df$Year)
 
 Year_Ascending_df <- Air_data_df %>%
-      arrange(Year)
+      arrange(Year) #Created Dataframe with years in order
 
 #Mann-Kendall Test
 
