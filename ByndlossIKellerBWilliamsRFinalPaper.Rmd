@@ -106,8 +106,11 @@ Year_Ascending_df <- Air_data_df %>%
 
 #Mann-Kendall Test
 
-MannKendall(Year_Ascending_df$SO4)
-
+MannKendall(Year_Ascending_df$SO4) #Shows very slight decrease in SO4 over years
+MannKendall(Year_Ascending_df$NH4) #Not significant
+MannKendall(Year_Ascending_df$NO3) #Not significant
+MannKendall(Year_Ascending_df$HNO3) #Not significant
+MannKendall(Year_Ascending_df$TNO3) #Not significant
 
 
 ###NOT WORKING YET
