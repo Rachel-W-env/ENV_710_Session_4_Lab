@@ -112,6 +112,15 @@ MannKendall(Year_Ascending_df$NO3) #Not significant
 MannKendall(Year_Ascending_df$HNO3) #Not significant
 MannKendall(Year_Ascending_df$TNO3) #Not significant
 
+SO4_results_by_site <- Year_Ascending_df %>%
+  group_by(SITE_ID) %>%
+  summarise(
+    tau = list(MannKendall(SO4)$tau)[[1]],        
+    p_value = list(MannKendall(SO4)$p.value)[[1]], 
+    .groups = "drop"
+  )
+
+print(SO4_results_by_site)
 
 ###NOT WORKING YET
 tau_result <- cor.test(Air_Data_NC$SO4, Air_Data_NC$Year, method = "kendall")
