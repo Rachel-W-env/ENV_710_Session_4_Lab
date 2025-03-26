@@ -8,6 +8,7 @@ output: pdf_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
+library(Kendall)
 library(zyp)
 library(here)
 library(dplyr)
@@ -24,6 +25,7 @@ library(FSA)
 #NC air data from EPA
 Air_Data_NC <- read.csv("NC_Air_Data_Project.csv")
 ```
+
 
 
 ```{r}
@@ -94,7 +96,24 @@ dev.off()
 ```
 
 
+```{r}
+#Mann-Kendall Test
+tau_result <- cor.test(Air_Data_NC$SO4, Air_Data_NC$Year, method = "kendall")
 
+# Print Kendall's tau and its associated p-value
+print(tau_result)
+
+# Calculate the trend line
+trend_line <- predict(loess(Air_Data_NC$SO4 ~ Air_Data_NC$Year))
+
+# Create a trend line plot
+ggplot() +
+  geom_point(aes(x = Air_Data_NC$Year, y = Air_Data_NC$SO4), color = "blue") +
+  geom_line(aes(x = Air_Data_NC$Year, y = trend_line), color = "red") +
+  labs(x = "Year", y = "Temperature", title = "Trend Line Plot") +
+  theme_minimal()
+
+```
 
 
 
