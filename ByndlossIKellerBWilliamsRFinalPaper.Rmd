@@ -98,6 +98,12 @@ dev.off()
 
 ```{r}
 #Mann-Kendall Test
+
+MannKendall(Air_Data_NC$SO4)
+
+
+
+###NOT WORKING YET
 tau_result <- cor.test(Air_Data_NC$SO4, Air_Data_NC$Year, method = "kendall")
 
 # Print Kendall's tau and its associated p-value
