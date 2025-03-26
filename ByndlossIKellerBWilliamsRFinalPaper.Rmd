@@ -97,9 +97,16 @@ dev.off()
 
 
 ```{r}
+
+Air_data_df <- as.data.frame(Air_Data_NC)
+Air_data_df$Year <- as.numeric(Air_data_df$Year)
+
+Year_Ascending_df <- Air_data_df %>%
+      arrange(Year)
+
 #Mann-Kendall Test
 
-MannKendall(Air_Data_NC$SO4)
+MannKendall(Year_Ascending_df$SO4)
 
 
 
