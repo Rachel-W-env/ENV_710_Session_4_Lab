@@ -62,6 +62,9 @@ Air_Summary_2022_SO4 <- Air_Data_2022 %>%
   ungroup()
 
 #making plot
+jpeg(filename = "ByndlossIKellerBWilliamsRFig1.jpeg", 
+     width = 2400, height = 1800, res = 300)
+
 SO4_2022_plot <- ggplot()+
   geom_errorbar(data = Air_Summary_2022_SO4, na.rm = TRUE,
                 aes(x = SITE_ID, 
@@ -87,6 +90,7 @@ SO4_2022_plot <- ggplot()+
 
 print(SO4_2022_plot)
 
+dev.off()
 ```
 
 
