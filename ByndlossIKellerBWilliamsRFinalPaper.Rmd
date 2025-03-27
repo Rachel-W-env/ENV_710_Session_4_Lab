@@ -98,46 +98,19 @@ dev.off()
 
 ```{r}
 
-Air_data_df <- as.data.frame(Air_Data_NC)
-Air_data_df$Year <- as.numeric(Air_data_df$Year)
+#Add season collumn, maybe use multilevel model.
 
-Year_Ascending_df <- Air_data_df %>%
-      arrange(Year) #Created Dataframe with years in order
+#1/Site generates random variable, don't need to specify site
 
-#Mann-Kendall Test
+#lme4 r package
+#lmer (concentration ~ Season + Year + 1|Site,
+#      data=df)
+#Turn categorical data into factors
 
-MannKendall(Year_Ascending_df$SO4) #Shows very slight decrease in SO4 over years
-MannKendall(Year_Ascending_df$NH4) #Not significant
-MannKendall(Year_Ascending_df$NO3) #Not significant
-MannKendall(Year_Ascending_df$HNO3) #Not significant
-MannKendall(Year_Ascending_df$TNO3) #Not significant
+#Can say which gases have seasonal effects
 
-SO4_results_by_site <- Year_Ascending_df %>%
-  group_by(SITE_ID) %>%
-  summarise(
-    tau = list(MannKendall(SO4)$tau)[[1]],        
-    p_value = list(MannKendall(SO4)$p.value)[[1]], 
-    .groups = "drop"
-  )
-
-print(SO4_results_by_site)
-
-###NOT WORKING YET
-tau_result <- cor.test(Air_Data_NC$SO4, Air_Data_NC$Year, method = "kendall")
-
-# Print Kendall's tau and its associated p-value
-print(tau_result)
-
-# Calculate the trend line
-trend_line <- predict(loess(Air_Data_NC$SO4 ~ Air_Data_NC$Year))
-
-# Create a trend line plot
-ggplot() +
-  geom_point(aes(x = Air_Data_NC$Year, y = Air_Data_NC$SO4), color = "blue") +
-  geom_line(aes(x = Air_Data_NC$Year, y = trend_line), color = "red") +
-  labs(x = "Year", y = "Temperature", title = "Trend Line Plot") +
-  theme_minimal()
-
+#Concentration ~ Season (climate) + Year (trend) + 1/Site (add random intercept by site)
+#THen use summary function
 ```
 
 
