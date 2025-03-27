@@ -110,6 +110,7 @@ dev.off()
 #Can say which gases have seasonal effects
 
 #Concentration ~ Season (climate) + Year (trend) + 1/Site (add random intercept by site)
+#THen use summary function
 ```
 
 
