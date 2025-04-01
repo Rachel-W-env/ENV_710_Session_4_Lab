@@ -115,6 +115,27 @@ dev.off()
 
 
 
+```{r}
+#Brock's linear regression work
+
+#I want to use week as a proxy for time of year as a predictor of air concentration of whatever gas. I want to convert the week value (1-52) into a sin and cosine wave transformation so that it fits for seasonality and is not treated as a linear variable which would not make sense here (week 52 is close to week 1 and summer is in the middle). 
+
+#Will do like Y = B0 + B1 sin(2pi*week / 52) + B2 cos(2pi*week / 52) + B3 + B4 + E. Thinking to use concentration of another gas as another predictor and also maybe site ID as a factor, though that might be overfitting. 
+
+Air_Data_NC <- Air_Data_NC %>% 
+  mutate(
+    sin_week = sin(2 * pi * Week / 52),
+    cos_week = cos(2 * pi * Week / 52)
+  )
+
+ggplot(Air_Data_NC, aes(x = Week)) +
+  geom_line(aes(y = sin_week, color = "Sine"), size = 1) +
+  geom_line(aes(y = cos_week, color = "Cosine"), size = 1) 
+
+
+
+
+```
 
 
 
