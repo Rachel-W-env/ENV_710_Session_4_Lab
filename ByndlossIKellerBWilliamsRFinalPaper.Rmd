@@ -103,9 +103,14 @@ dev.off()
 #1/Site generates random variable, don't need to specify site
 
 #lme4 r package
-#lmer (concentration ~ Season + Year + 1|Site,
-#      data=df)
+
 #Turn categorical data into factors
+
+#lmer (concentration ~ Season + Year + 1|SITE_ID,
+#      data=df)
+
+#lmer (SO4 ~ Season + Year + 1|SITE_ID,
+#      data=df)
 
 #Can say which gases have seasonal effects
 
