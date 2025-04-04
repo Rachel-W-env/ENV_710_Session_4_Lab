@@ -102,20 +102,47 @@ dev.off()
 
 #1/Site generates random variable, don't need to specify site
 
-#lme4 r package
+Air_Data_NC$Season <- ifelse(Air_Data_NC$Week %in% c(25:34), "SUMMER",
+                    ifelse (Air_Data_NC$Week %in% c(35:51), "AUTUMN",ifelse (Air_Data_NC$Week %in% c(52, 53, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11), 
+                                    "WINTER", "SPRING")))
 
-#Turn categorical data into factors
+Air_Data_NC$Season <- factor(Air_Data_NC$Season,
+                             levels=( c("SUMMER", "AUTUMN", "WINTER", "SPRING")))
 
 #lmer (concentration ~ Season + Year + 1|SITE_ID,
 #      data=df)
 
-#lmer (SO4 ~ Season + Year + 1|SITE_ID,
-#      data=df)
+lmm1 <- lmer(SO4 ~ Season + Year + 1|SITE_ID, data=Air_Data_NC)
+AIC(lmm1) #Only gas with normal AIC
+plot(lmm1)
+#qqnorm(lmm1) Wasn't working
+summary(lmm1)
+
+lmm2 <- lmer(NO3 ~ Season + Year + 1|SITE_ID, data=Air_Data_NC)
+AIC(lmm2)
+plot(lmm2)
+#qqnorm(lmm2) Wasn't working
+summary(lmm2)
+
+lmm3 <- lmer(HNO3 ~ Season + Year + 1|SITE_ID, data=Air_Data_NC)
+AIC(lmm3)
+plot(lmm3)
+#qqnorm(lmm3) Wasn't working
+summary(lmm3)
+
+lmm4 <- lmer(NH4 ~ Season + Year + 1|SITE_ID, data=Air_Data_NC)
+AIC(lmm4)
+plot(lmm4)
+#qqnorm(lmm4) Wasn't working
+summary(lmm4)
 
 #Can say which gases have seasonal effects
+#HNO3 and NO3 have very negative AIC values while SO4 has 69.91.
+
+#Get error code that suggests SITEID doesn't have much effect on concentrations. 
 
 #Concentration ~ Season (climate) + Year (trend) + 1/Site (add random intercept by site)
-#THen use summary function
+#Then use summary function
 ```
 
 
