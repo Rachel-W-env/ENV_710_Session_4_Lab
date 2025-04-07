@@ -142,8 +142,7 @@ summary(lmm4)
 
 #Can say which gases have seasonal effects
 #HNO3 and NO3 have very negative AIC values while SO4 has 69.91.
-
-#Get error code that suggests SITEID doesn't have much effect on concentrations. 
+#HNO3 and SO4 have significant p values, indicating that they display seasonality. 
 
 #Concentration ~ Season (climate) + Year (trend) + 1/Site (add random intercept by site)
 #Then use summary function
