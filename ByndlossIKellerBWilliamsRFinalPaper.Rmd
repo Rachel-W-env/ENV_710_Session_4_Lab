@@ -17,6 +17,7 @@ library(lubridate)
 library(readxl)
 library(FSA)
 library(lme4)
+library(lmerTest)
 
 ```
 
@@ -108,6 +109,9 @@ Air_Data_NC$Season <- ifelse(Air_Data_NC$Week %in% c(25:34), "SUMMER",
 
 Air_Data_NC$Season <- factor(Air_Data_NC$Season,
                              levels=( c("SUMMER", "AUTUMN", "WINTER", "SPRING")))
+
+Air_Data_NC$SITE_ID <- factor(Air_Data_NC$SITE_ID,
+                              levels=(c("Beaufort", "Candor", "Coweeta","Cranberry","Duke Forest")))
 
 #lmer (concentration ~ Season + Year + 1|SITE_ID,
 #      data=df)
