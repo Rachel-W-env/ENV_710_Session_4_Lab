@@ -116,28 +116,37 @@ Air_Data_NC$SITE_ID <- factor(Air_Data_NC$SITE_ID,
 #lmer (concentration ~ Season + Year + 1|SITE_ID,
 #      data=df)
 
-lmm1 <- lmer(SO4 ~ Season + Year + 1|SITE_ID, data=Air_Data_NC)
+lmtest <- lm(SO4 ~ Season + Year, data=Air_Data_NC)
+summary(lmtest)
+plot(lmtest)
+
+ggplot(Air_Data_NC) +
+  geom_boxplot(aes(x=SITE_ID, y=SO4)) +
+  geom_jitter(aes(x=SITE_ID, y=SO4))
+
+
+lmm1 <- lmer(SO4 ~ Season + Year + (1|SITE_ID), data=Air_Data_NC)
 AIC(lmm1) #Only gas with normal AIC
 plot(lmm1)
-#qqnorm(lmm1) Wasn't working
-summary(lmm1)
+qqnorm(resid(lmm1)) #Wasn't working
+summary(lmm1) #Lower in Winter and Autumn than in summer. Decreasing over time
 
-lmm2 <- lmer(NO3 ~ Season + Year + 1|SITE_ID, data=Air_Data_NC)
+lmm2 <- lmer(NO3 ~ Season + Year + (1|SITE_ID), data=Air_Data_NC)
 AIC(lmm2)
 plot(lmm2)
-#qqnorm(lmm2) Wasn't working
+qqnorm(resid(lmm2)) #Wasn't working
 summary(lmm2)
 
-lmm3 <- lmer(HNO3 ~ Season + Year + 1|SITE_ID, data=Air_Data_NC)
+lmm3 <- lmer(HNO3 ~ Season + Year + (1|SITE_ID), data=Air_Data_NC)
 AIC(lmm3)
 plot(lmm3)
-#qqnorm(lmm3) Wasn't working
-summary(lmm3)
+qqnorm(resid(lmm3)) #Wasn't working
+summary(lmm3) #Shows concentrations are significantly higher in winter and spring than summer
 
-lmm4 <- lmer(NH4 ~ Season + Year + 1|SITE_ID, data=Air_Data_NC)
+lmm4 <- lmer(NH4 ~ Season + Year + (1|SITE_ID), data=Air_Data_NC)
 AIC(lmm4)
 plot(lmm4)
-#qqnorm(lmm4) Wasn't working
+qqnorm(resid(lmm4)) #Wasn't working
 summary(lmm4)
 
 #Can say which gases have seasonal effects
