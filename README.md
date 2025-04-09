@@ -13,6 +13,6 @@ Week, Year, DATEOFF, Ca, Cl, HNO3, HNO3.PPB, K, Mg, Na, NH4, NO3, SO2, SO2.PPB,
 SO4, TNO3, and DATEON. We added a column for seasons for analysis purposes. For 
 the purpose of our analysis, the independent variables will be time (Week and 
 Year), season (Season), and location (SITE_ID) and the dependent variables will be 
-pollutants (Ca, Cl, HNO3, K, Mg, Na, NH4, NO3, SO2, SO4, and TNO3).
+pollutant concentrations (Ca, Cl, HNO3, K, Mg, Na, NH4, NO3, SO2, SO4, and TNO3).
 
 Analyses performed: Multilevel regression, linear regression, and Kruskall Wallis

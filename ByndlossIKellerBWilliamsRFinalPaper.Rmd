@@ -194,6 +194,35 @@ print(SO4_NH4)
 lm1 <- lm(SO4 ~ sin_week + cos_week + NH4, data = Air_Data_NC)
 summary(lm1)
 #this is already a really strong fit and statistically significant
+
+#checking for multi-collinearity
+lm_predictors <- Air_Data_NC %>% 
+  select(`K`, `Mg`, `Na`,  `NH4`, `NO3`, `SO2`, `SO2.PPB`, `SO4`, `TNO3`, `sin_week`, `cos_week`)
+
+correlation_matrix <- cor(lm_predictors, use = "complete.obs")
+correlation_matrix
+#this shows that beyond NH4, K and Mg are actually slightly more correlated with SO4 concentration (0.588 and 0.56 respectively). However, it will be important to note that this is correlation alone, and not statistical significance. Some relationship among predictive variables, but not super strong and they will not be included in the regression anyways. 
+
+#trying out a new fit with more variables
+lm2 <- lm(SO4 ~ sin_week + cos_week + NH4 + K + Mg, data = Air_Data_NC)
+summary(lm2)
+#this is way better! all very significant except for sin_week and adj r squared is now 0.77. 
+#there are probably other predictors like temperature and population that could be good predictors, but that may be accounted for somewhat already in these pollutant concentrations. 
+#lets try removing sin_week just to see. This specific data seems to better align with a cos wave shape, which makes sense given the start in winter and end in winter!
+
+lm3 <- lm(SO4 ~ cos_week + NH4 + K + Mg, data = Air_Data_NC)
+summary(lm3)
+#this is pretty much the exact same. r squared 0.77 and all significant. I am going to retain sin_week then, as it may make the same model applicable to other datasets and sites whose collection might start and end at other periods of the year. 
+
+#lets check the plots quickly
+plot(lm2)
+#looks pretty normal, but lets actually run AIC tests instead to determine which model will be the best fit. 
+
+AIC(lm1) #-42
+AIC(lm2) #-1122
+AIC(lm3) #-1121
+#again, the explanatory power of lm2 and lm3 are nearly identical, but I believe lm2 will retain better relevance in other datasets and will be more useful overall. For these reasons, we will select lm2 with predictors of sin_week, cos_week, NH4, K, and Mg as our final linear regression model. 
+
 ```
 
 
