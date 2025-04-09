@@ -173,8 +173,26 @@ ggplot(Air_Data_NC, aes(x = Week)) +
   geom_line(aes(y = cos_week, color = "Cosine"), size = 1) 
 
 
+#checking some quick plots to look for correlation in gas concentrations
+SO4_NO3 <- ggplot(Air_Data_NC, aes(x = NO3, y = SO4))+
+  geom_point()
+print(SO4_NO3)
+#definitely a decent positive correlation
 
+SO4_HNO3 <- ggplot(Air_Data_NC, aes(x = HNO3, y = SO4))+
+  geom_point()
+print(SO4_HNO3)
+#also pretty decent positive correlation. A little more scattered than previous
 
+SO4_NH4 <- ggplot(Air_Data_NC, aes(x = NH4, y = SO4))+
+  geom_point()
+print(SO4_NH4)
+#really strong correlation!
+
+#trying out a basic first model
+lm1 <- lm(SO4 ~ sin_week + cos_week + NH4, data = Air_Data_NC)
+summary(lm1)
+#this is already a really strong fit and statistically significant
 ```
 
 
