@@ -27,7 +27,7 @@ library(dunn.test)
 Air_Data_NC <- read.csv("NC_Air_Data_Project.csv")
 ```
 
-
+##Data preparation and exploratory analysis
 
 ```{r}
 #making a plot for first assignment
@@ -96,6 +96,7 @@ print(SO4_2022_plot)
 dev.off()
 ```
 
+##Multilevel Regression
 
 ```{r}
 
@@ -153,7 +154,7 @@ summary(lmm4) #Autumn has strong significance, lower concentrations from Summer.
 
 ```
 
-
+##Linear Regression
 
 ```{r}
 #Brock's linear regression work
