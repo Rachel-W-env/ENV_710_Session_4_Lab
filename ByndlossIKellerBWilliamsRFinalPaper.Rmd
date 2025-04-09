@@ -18,7 +18,7 @@ library(readxl)
 library(FSA)
 library(lme4)
 library(lmerTest)
-
+library(dunn.test)
 ```
 
 
@@ -27,7 +27,7 @@ library(lmerTest)
 Air_Data_NC <- read.csv("NC_Air_Data_Project.csv")
 ```
 
-
+##Data preparation and exploratory analysis
 
 ```{r}
 #making a plot for first assignment
@@ -96,6 +96,7 @@ print(SO4_2022_plot)
 dev.off()
 ```
 
+##Multilevel Regression
 
 ```{r}
 
@@ -135,7 +136,7 @@ lmm2 <- lmer(NO3 ~ Season + Year + (1|SITE_ID), data=Air_Data_NC)
 AIC(lmm2)
 plot(lmm2)
 qqnorm(resid(lmm2)) 
-summary(lmm2) #Autumn, winter, and spring all have significantly higher concentrations than in summer. 
+summary(lmm2)#Autumn, winter, and spring all have significantly higher concentrations than in summer. 
 
 lmm3 <- lmer(HNO3 ~ Season + Year + (1|SITE_ID), data=Air_Data_NC)
 AIC(lmm3)
@@ -153,7 +154,7 @@ summary(lmm4) #Autumn has strong significance, lower concentrations from Summer.
 
 ```
 
-
+##Linear Regression
 
 ```{r}
 #Brock's linear regression work
@@ -193,6 +194,202 @@ print(SO4_NH4)
 lm1 <- lm(SO4 ~ sin_week + cos_week + NH4, data = Air_Data_NC)
 summary(lm1)
 #this is already a really strong fit and statistically significant
+```
+
+
+# Boxplots
+```{r}
+Air_Data_NC$Date <- as.Date(paste(Air_Data_NC$Year, 
+                                  Air_Data_NC$Week, 
+                                  1, sep = "-"), 
+                            format = "%Y-%U-%u")
+
+NC_pollutants <- Air_Data_NC %>%
+  select(Date, SITE_ID, HNO3, NH4, NO3, SO4)
+
+NC_pollutants_long <- NC_pollutants %>%
+  pivot_longer(cols = -c(Date, SITE_ID), 
+               names_to = "Pollutant", 
+               values_to = "Value")
+
+# Create faceted boxplots
+ggplot(NC_pollutants_long, aes(x = SITE_ID, y = Value)) +
+  geom_boxplot() +
+  theme_minimal() +
+  facet_wrap(~ Pollutant, scales = "free_y") +
+  labs(title = "Pollutant Levels by Site",
+       x = "Site ID", y = "Value") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+
+# Spatail Analysis
+
+Before conducting an ANOVA, it is important to check if the data meets the necessary assumptions: 1) normally distributed samples values, 2) samples are independent of one another, and 3) population variances are equal.
+
+```{r}
+# Checking for normality through histograms of pollutants by site id
+hist1 <- ggplot(NC_pollutants, aes(x = HNO3,
+                                   fill = SITE_ID)) +
+  geom_histogram() + #set number of bins according to rice rule????
+  labs(x = "HNO3",
+       y = "Count",
+       title = "Distribution of Ca value by Site ID",
+       caption = "Figure 1: This histogram displays the counts for HNO3 ?????? 
+       across five site ids in North Carolina.") +
+  facet_grid(.~SITE_ID) +
+  theme_bw() +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5))
+hist1
+hist2 <- ggplot(NC_pollutants, aes(x = NH4,
+                                   fill = SITE_ID)) +
+  geom_histogram() + #set number of bins according to rice rule????
+  labs(x = "NH4",
+       y = "Count",
+       title = "Distribution of NH4 value by Site ID",
+       caption = "Figure 1: This histogram displays the counts for NH4 ?????? 
+       across five site ids in North Carolina.") +
+  facet_grid(.~SITE_ID) +
+  theme_bw() +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5))
+hist2
+hist3 <- ggplot(NC_pollutants, aes(x = NO3,
+                                   fill = SITE_ID)) +
+  geom_histogram() + #set number of bins according to rice rule????
+  labs(x = "NO3",
+       y = "Count",
+       title = "Distribution of NO3 value by Site ID",
+       caption = "Figure 1: This histogram displays the counts for NO3 ?????? 
+       across five site ids in North Carolina.") +
+  facet_grid(.~SITE_ID) +
+  theme_bw() +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5))
+hist3
+hist4 <- ggplot(NC_pollutants, aes(x = SO4,
+                                   fill = SITE_ID)) +
+  geom_histogram() + #set number of bins according to rice rule????
+  labs(x = "SO4",
+       y = "Count",
+       title = "Distribution of SO4 value by Site ID",
+       caption = "Figure 1: This histogram displays the counts for SO4 ?????? 
+       across five site ids in North Carolina.") +
+  facet_grid(.~SITE_ID) +
+  theme_bw() +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5))
+hist4
+
+# Since NO3 non-normally distributed, applying log10 to NO3
+NC_pollutants <- NC_pollutants %>%
+  mutate(log_NO3 = log10(NO3))
+
+# Creating another histogram with log transformed NO3
+hist5 <- ggplot(NC_pollutants, aes(x = log_NO3,
+                                   fill = SITE_ID)) +
+  geom_histogram() + #set number of bins according to rice rule????
+  labs(x = "log transformed NO3",
+       y = "Count",
+       title = "Distribution of Log-Transformed NO3 value by Site ID",
+       caption = "Figure 1: This histogram displays the counts for 
+       log-transformed NO3 ?????? 
+       across five site ids in North Carolina.") +
+  facet_grid(.~SITE_ID) +
+  theme_bw() +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5))
+hist5
+```
+
+Based on the histograms, the pollutants are all normally distributed, but it important to note that NO3 had to be log-transformed to meet this assumption.
+
+```{r}
+# Conducting Bartlett test for homogeneity
+variance_HNO3 <- bartlett.test(NC_pollutants$HNO3,
+                               NC_pollutants$SITE_ID)
+variance_HNO3
+variance_NH4 <- bartlett.test(NC_pollutants$NH4,
+                               NC_pollutants$SITE_ID)
+variance_NH4
+variance_NO3 <- bartlett.test(NC_pollutants$NO3,
+                               NC_pollutants$SITE_ID)
+variance_NO3
+variance_SO4 <- bartlett.test(NC_pollutants$SO4,
+                               NC_pollutants$SITE_ID)
+variance_SO4
+```
+
+Although NO3 could be log-transformed to become more normally distributed, none of the pollutants passed the Barlett test for homogeneity of variances.
+
+```{r}
+# Calculating variances of pollutants by site
+variance_check_HNO3 <- NC_pollutants %>%
+  group_by(SITE_ID) %>%
+  summarise(Variance = var(HNO3, na.rm = TRUE))
+
+variance_check_NH4 <- NC_pollutants %>%
+  group_by(SITE_ID) %>%
+  summarise(Variance = var(NH4, na.rm = TRUE))
+
+variance_check_NO3 <- NC_pollutants %>%
+  group_by(SITE_ID) %>%
+  summarise(Variance = var(NO3, na.rm = TRUE))
+
+variance_check_SO4 <- NC_pollutants %>%
+  group_by(SITE_ID) %>%
+  summarise(Variance = var(SO4, na.rm = TRUE))
+
+# Calculating max, min, and max/min for variance 
+max_variance_HNO3 <- max(variance_check_HNO3$Variance)
+min_variance_HNO3 <- min(variance_check_HNO3$Variance)
+variance_ratio_HNO3 <- max_variance_HNO3 / min_variance_HNO3
+variance_ratio_HNO3
+
+max_variance_NH4 <- max(variance_check_NH4$Variance)
+min_variance_NH4 <- min(variance_check_NH4$Variance)
+variance_ratio_NH4 <- max_variance_NH4 / min_variance_NH4
+variance_ratio_NH4
+
+max_variance_NO3 <- max(variance_check_NO3$Variance)
+min_variance_NO3 <- min(variance_check_NO3$Variance)
+variance_ratio_NO3 <- max_variance_NO3 / min_variance_NO3
+variance_ratio_NO3
+
+max_variance_SO4 <- max(variance_check_SO4$Variance)
+min_variance_SO4 <- min(variance_check_SO4$Variance)
+variance_ratio_SO4 <- max_variance_SO4 / min_variance_SO4
+variance_ratio_SO4
+```
+
+To conduct another test of variance, we calculated the maximum-minimum ratio for variance. If the ratio is less than 4, than equal variances can be assumed. Only two of the four pollutants (SO4 and NH4) passed this test. Due to these results, we could perform a one-way ANOVA for those two pollutants, but we will instead run the non-parametric alternative to a one-way ANOVA, i.e., a Kruskal Wallis test, for all pollutants.
+
+```{r}
+# Running Kruskal Wallis + Dunn 
+kw_HO3 <- kruskal.test(HNO3 ~ SITE_ID, data = NC_pollutants)
+kw_HO3
+dunn_HO3 <- dunn.test(NC_pollutants$HNO3, NC_pollutants$SITE_ID, 
+                      kw = TRUE, label = TRUE, wrap = TRUE)
+dunn_HO3
+
+kw_NH4 <- kruskal.test(NH4 ~ SITE_ID, data = NC_pollutants)
+kw_NH4
+dunn_NH4 <- dunn.test(NC_pollutants$NH4, NC_pollutants$SITE_ID, 
+                      kw = TRUE, label = TRUE, wrap = TRUE)
+dunn_NH4
+
+kw_NO3 <- kruskal.test(NO3 ~ SITE_ID, data = NC_pollutants)
+kw_NO3
+dunn_NO3 <- dunn.test(NC_pollutants$NO3, NC_pollutants$SITE_ID, 
+                      kw = TRUE, label = TRUE, wrap = TRUE)
+dunn_NO3
+
+kw_SO4 <- kruskal.test(SO4 ~ SITE_ID, data = NC_pollutants)
+kw_SO4
+dunn_SO4 <- dunn.test(NC_pollutants$SO4, NC_pollutants$SITE_ID, 
+                      kw = TRUE, label = TRUE, wrap = TRUE)
+dunn_SO4
 ```
 
 
