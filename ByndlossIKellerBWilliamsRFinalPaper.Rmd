@@ -135,7 +135,7 @@ lmm2 <- lmer(NO3 ~ Season + Year + (1|SITE_ID), data=Air_Data_NC)
 AIC(lmm2)
 plot(lmm2)
 qqnorm(resid(lmm2)) 
-summary(lmm2) #Autumn, winter, and spring all have significantly higher concentrations than in summer. 
+summary(lmm2)#Autumn, winter, and spring all have significantly higher concentrations than in summer. 
 
 lmm3 <- lmer(HNO3 ~ Season + Year + (1|SITE_ID), data=Air_Data_NC)
 AIC(lmm3)
