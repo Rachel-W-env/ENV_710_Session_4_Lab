@@ -128,33 +128,29 @@ ggplot(Air_Data_NC) +
 lmm1 <- lmer(SO4 ~ Season + Year + (1|SITE_ID), data=Air_Data_NC)
 AIC(lmm1) #Only gas with normal AIC
 plot(lmm1)
-qqnorm(resid(lmm1)) #Wasn't working
-summary(lmm1) #Lower in Winter and Autumn than in summer. Decreasing over time
+qqnorm(resid(lmm1)) 
+summary(lmm1) #Lower in Winter and Autumn than in summer. Decreasing over time in the target years. 
 
 lmm2 <- lmer(NO3 ~ Season + Year + (1|SITE_ID), data=Air_Data_NC)
 AIC(lmm2)
 plot(lmm2)
-qqnorm(resid(lmm2)) #Wasn't working
-summary(lmm2)
+qqnorm(resid(lmm2)) 
+summary(lmm2) #Autumn, winter, and spring all have significantly higher concentrations than in summer. 
 
 lmm3 <- lmer(HNO3 ~ Season + Year + (1|SITE_ID), data=Air_Data_NC)
 AIC(lmm3)
 plot(lmm3)
-qqnorm(resid(lmm3)) #Wasn't working
+qqnorm(resid(lmm3)) 
 summary(lmm3) #Shows concentrations are significantly higher in winter and spring than summer
 
 lmm4 <- lmer(NH4 ~ Season + Year + (1|SITE_ID), data=Air_Data_NC)
 AIC(lmm4)
 plot(lmm4)
-qqnorm(resid(lmm4)) #Wasn't working
-summary(lmm4)
+qqnorm(resid(lmm4)) 
+summary(lmm4) #Autumn has strong significance, lower concentrations from Summer. It has also been getting lower over the target years. 
 
 #Can say which gases have seasonal effects
-#HNO3 and NO3 have very negative AIC values while SO4 has 69.91.
-#HNO3 and SO4 have significant p values, indicating that they display seasonality. 
 
-#Concentration ~ Season (climate) + Year (trend) + 1/Site (add random intercept by site)
-#Then use summary function
 ```
 
 
