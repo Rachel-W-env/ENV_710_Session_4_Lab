@@ -19,6 +19,12 @@ library(FSA)
 library(lme4)
 library(lmerTest)
 library(dunn.test)
+library(gt)
+library(paletteer)
+library(tidyr)
+library(tibble)
+library(ggpubr)
+library(viridis)
 ```
 
 
@@ -194,49 +200,65 @@ print(SO4_NH4)
 lm1 <- lm(SO4 ~ sin_week + cos_week + NH4, data = Air_Data_NC)
 summary(lm1)
 #this is already a really strong fit and statistically significant
-```
 
+#checking for multi-collinearity
+lm_predictors <- Air_Data_NC %>% 
+  select(`K`, `Mg`, `Na`,  `NH4`, `NO3`, `SO2`, `SO2.PPB`, `SO4`, `TNO3`, `sin_week`, `cos_week`)
 
-# Boxplots
-```{r}
-Air_Data_NC$Date <- as.Date(paste(Air_Data_NC$Year, 
-                                  Air_Data_NC$Week, 
-                                  1, sep = "-"), 
-                            format = "%Y-%U-%u")
+correlation_matrix <- cor(lm_predictors, use = "complete.obs")
+correlation_matrix
+#this shows that beyond NH4, K and Mg are actually slightly more correlated with SO4 concentration (0.588 and 0.56 respectively). However, it will be important to note that this is correlation alone, and not statistical significance. Some relationship among predictive variables, but not super strong and they will not be included in the regression anyways. 
 
-NC_pollutants <- Air_Data_NC %>%
-  select(Date, SITE_ID, HNO3, NH4, NO3, SO4)
+#trying out a new fit with more variables
+lm2 <- lm(SO4 ~ sin_week + cos_week + NH4 + K + Mg, data = Air_Data_NC)
+summary(lm2)
+#this is way better! all very significant except for sin_week and adj r squared is now 0.77. 
+#there are probably other predictors like temperature and population that could be good predictors, but that may be accounted for somewhat already in these pollutant concentrations. 
+#lets try removing sin_week just to see. This specific data seems to better align with a cos wave shape, which makes sense given the start in winter and end in winter!
 
-NC_pollutants_long <- NC_pollutants %>%
-  pivot_longer(cols = -c(Date, SITE_ID), 
-               names_to = "Pollutant", 
-               values_to = "Value")
+lm3 <- lm(SO4 ~ cos_week + NH4 + K + Mg, data = Air_Data_NC)
+summary(lm3)
+#this is pretty much the exact same. r squared 0.77 and all significant. I am going to retain sin_week then, as it may make the same model applicable to other datasets and sites whose collection might start and end at other periods of the year. 
 
-# Create faceted boxplots
-ggplot(NC_pollutants_long, aes(x = SITE_ID, y = Value)) +
-  geom_boxplot() +
-  theme_minimal() +
-  facet_wrap(~ Pollutant, scales = "free_y") +
-  labs(title = "Pollutant Levels by Site",
-       x = "Site ID", y = "Value") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+#lets check the plots quickly
+plot(lm2)
+#looks pretty normal, but lets actually run AIC tests instead to determine which model will be the best fit. 
+
+AIC(lm1) #-42
+AIC(lm2) #-1122
+AIC(lm3) #-1121
+#again, the explanatory power of lm2 and lm3 are nearly identical, but I believe lm2 will retain better relevance in other datasets and will be more useful overall. For these reasons, we will select lm2 with predictors of sin_week, cos_week, NH4, K, and Mg as our final linear regression model. 
+
 ```
 
 
 # Spatial Analysis
 
-Before conducting an ANOVA, it is important to check if the data meets the necessary assumptions: 1) normally distributed samples values, 2) samples are independent of one another, and 3) population variances are equal.
+Before conducting any spatial analysis, it is important to check if the data meets the following parametric assumptions: 1) normally distributed sample values, 2) samples are independent of one another, and 3) population variances are equal.
 
 ```{r}
+# Filtering data
+NC_pollutants <- Air_Data_NC %>%
+  select(SITE_ID, HNO3, NH4, NO3, SO4)
+
+# Counting observations per site
+bin_info <- NC_pollutants %>%
+  group_by(SITE_ID) %>%
+  summarize(n = n(),
+            bins = ceiling(2 * n^(1/3)))
+
 # Checking for normality through histograms of pollutants by site id
 hist1 <- ggplot(NC_pollutants, aes(x = HNO3,
                                    fill = SITE_ID)) +
-  geom_histogram() + #set number of bins according to rice rule????
-  labs(x = "HNO3",
+  scale_fill_viridis(discrete = TRUE, option = "E") +  #colorblindness friendly
+  geom_histogram(bins = 13) + #set number of bins according to rice rule
+  labs(x = "HNO3 Concentration (µg/m³)",
        y = "Count",
-       title = "Distribution of Ca value by Site ID",
-       caption = "Figure 1: This histogram displays the counts for HNO3 ?????? 
-       across five site ids in North Carolina.") +
+       title = "Distribution of HNO3 Concentration (µg/m³) by Site"#,
+       #caption = "Figure 1: This histogram displays the counts for HNO3 
+       #concentration, measured in micrograms per cubic 
+       #meter, across five sites in North Carolina."
+       ) +
   facet_grid(.~SITE_ID) +
   theme_bw() +
   theme(legend.position = "none",
@@ -244,12 +266,15 @@ hist1 <- ggplot(NC_pollutants, aes(x = HNO3,
 hist1
 hist2 <- ggplot(NC_pollutants, aes(x = NH4,
                                    fill = SITE_ID)) +
-  geom_histogram() + #set number of bins according to rice rule????
-  labs(x = "NH4",
+  scale_fill_viridis(discrete = TRUE, option = "E") +  #colorblindness friendly
+  geom_histogram(bins = 13) + #set number of bins according to rice rule
+  labs(x = "NH4 Concentration (µg/m³)",
        y = "Count",
-       title = "Distribution of NH4 value by Site ID",
-       caption = "Figure 1: This histogram displays the counts for NH4 ?????? 
-       across five site ids in North Carolina.") +
+       title = "Distribution of NH4 Concentration (µg/m³) by Site"#,
+       #caption = "Figure 2: This histogram displays the counts for NH4 
+       #concentration, measured in micrograms per cubic 
+       #meter, across five sites in North Carolina."
+       ) +
   facet_grid(.~SITE_ID) +
   theme_bw() +
   theme(legend.position = "none",
@@ -257,12 +282,15 @@ hist2 <- ggplot(NC_pollutants, aes(x = NH4,
 hist2
 hist3 <- ggplot(NC_pollutants, aes(x = NO3,
                                    fill = SITE_ID)) +
-  geom_histogram() + #set number of bins according to rice rule????
-  labs(x = "NO3",
+  scale_fill_viridis(discrete = TRUE, option = "E") +  #colorblindness friendly
+  geom_histogram(bins = 13) + #set number of bins according to rice rule
+  labs(x = "NO3 Concentration (µg/m³)",
        y = "Count",
-       title = "Distribution of NO3 value by Site ID",
-       caption = "Figure 1: This histogram displays the counts for NO3 ?????? 
-       across five site ids in North Carolina.") +
+       title = "Distribution of NO3 Concentration (µg/m³) by Site"#,
+       #caption = "Figure 3: This histogram displays the counts for NO3 
+       #concentration, measured in micrograms per cubic 
+       #meter, across five sites in North Carolina."
+       ) +
   facet_grid(.~SITE_ID) +
   theme_bw() +
   theme(legend.position = "none",
@@ -270,12 +298,15 @@ hist3 <- ggplot(NC_pollutants, aes(x = NO3,
 hist3
 hist4 <- ggplot(NC_pollutants, aes(x = SO4,
                                    fill = SITE_ID)) +
-  geom_histogram() + #set number of bins according to rice rule????
-  labs(x = "SO4",
+  scale_fill_viridis(discrete = TRUE, option = "E") +  #colorblindness friendly
+  geom_histogram(bins = 13) + #set number of bins according to rice rule
+  labs(x = "SO4 Concentration (µg/m³)",
        y = "Count",
-       title = "Distribution of SO4 value by Site ID",
-       caption = "Figure 1: This histogram displays the counts for SO4 ?????? 
-       across five site ids in North Carolina.") +
+       title = "Distribution of SO4 value by Site ID"#,
+       #caption = "Figure 4: This histogram displays the counts for SO4 
+       #concentration, measured in micrograms per cubic 
+       #meter, across five site ids in North Carolina."
+       ) +
   facet_grid(.~SITE_ID) +
   theme_bw() +
   theme(legend.position = "none",
@@ -289,13 +320,17 @@ NC_pollutants <- NC_pollutants %>%
 # Creating another histogram with log transformed NO3
 hist5 <- ggplot(NC_pollutants, aes(x = log_NO3,
                                    fill = SITE_ID)) +
-  geom_histogram() + #set number of bins according to rice rule????
-  labs(x = "log transformed NO3",
+  scale_fill_viridis(discrete = TRUE, option = "E") +  #colorblindness friendly
+  geom_histogram(bins = 13) + #set number of bins according to rice rule
+  labs(x = "Log-Transformed NO3 Concentration (µg/m³)",
        y = "Count",
-       title = "Distribution of Log-Transformed NO3 value by Site ID",
-       caption = "Figure 1: This histogram displays the counts for 
-       log-transformed NO3 ?????? 
-       across five site ids in North Carolina.") +
+       title = "Distribution of Log-Transformed NO3 Concentration (µg/m³) 
+       by Site"#,
+       #caption = "Figure 5: This histogram displays the counts for 
+       #log-transformed NO3 concentration, measured in 
+       #micrograms per cubic meter, across five sites in 
+       #North Carolina."
+       ) +
   facet_grid(.~SITE_ID) +
   theme_bw() +
   theme(legend.position = "none",
@@ -363,37 +398,268 @@ variance_ratio_SO4 <- max_variance_SO4 / min_variance_SO4
 variance_ratio_SO4
 ```
 
-To conduct another test of variance, we calculated the maximum-minimum ratio for variance. If the ratio is less than 4, than equal variances can be assumed. Only two of the four pollutants (SO4 and NH4) passed this test. Due to these results, we could perform a one-way ANOVA for those two pollutants, but we will instead run the non-parametric alternative to a one-way ANOVA, i.e., a Kruskal Wallis test, for all pollutants.
+To conduct another test of variance, we calculated the maximum-minimum ratio for variance. If the ratio is less than 4, than equal variances can be assumed. Only two of the four pollutants (SO4 and NH4) passed this test. Due to these results, we will proceed with a one-way ANOVA for SO4 and NH4 but run the non-parametric alternative to a one-way ANOVA, i.e., a Kruskal Wallis test, for HNO3 and NO3.
 
 ```{r}
-# Running Kruskal Wallis + Dunn 
+# Running ANOVA + Tukey for NH4 and SO4
+anova_NH4 <- aov(NH4 ~ SITE_ID, data = NC_pollutants)
+summary(anova_NH4)
+tukey_NH4 <- TukeyHSD(anova_NH4)
+tukey_NH4
+
+anova_SO4 <- aov(SO4 ~ SITE_ID, data = NC_pollutants)
+summary(anova_SO4)
+tukey_SO4 <- TukeyHSD(anova_SO4)
+tukey_SO4
+
+# Running Kruskal Wallis + Dunn for HO3 and NO3
 kw_HO3 <- kruskal.test(HNO3 ~ SITE_ID, data = NC_pollutants)
 kw_HO3
-dunn_HO3 <- dunn.test(NC_pollutants$HNO3, NC_pollutants$SITE_ID, 
-                      kw = TRUE, label = TRUE, wrap = TRUE)
+dunn_HO3 <- dunn.test(NC_pollutants$HNO3, NC_pollutants$SITE_ID)
 dunn_HO3
-
-kw_NH4 <- kruskal.test(NH4 ~ SITE_ID, data = NC_pollutants)
-kw_NH4
-dunn_NH4 <- dunn.test(NC_pollutants$NH4, NC_pollutants$SITE_ID, 
-                      kw = TRUE, label = TRUE, wrap = TRUE)
-dunn_NH4
 
 kw_NO3 <- kruskal.test(NO3 ~ SITE_ID, data = NC_pollutants)
 kw_NO3
-dunn_NO3 <- dunn.test(NC_pollutants$NO3, NC_pollutants$SITE_ID, 
-                      kw = TRUE, label = TRUE, wrap = TRUE)
+dunn_NO3 <- dunn.test(NC_pollutants$NO3, NC_pollutants$SITE_ID)
 dunn_NO3
 
-kw_SO4 <- kruskal.test(SO4 ~ SITE_ID, data = NC_pollutants)
-kw_SO4
-dunn_SO4 <- dunn.test(NC_pollutants$SO4, NC_pollutants$SITE_ID, 
-                      kw = TRUE, label = TRUE, wrap = TRUE)
-dunn_SO4
+# Calculating measures of central tendency and data spread
+tapply(NC_pollutants$NH4, NC_pollutants$SITE_ID, mean, na.rm = TRUE)
+tapply(NC_pollutants$NH4, NC_pollutants$SITE_ID, median, na.rm = TRUE)
+tapply(NC_pollutants$NH4, NC_pollutants$SITE_ID, sd, na.rm = TRUE)
+tapply(NC_pollutants$NH4, NC_pollutants$SITE_ID, IQR, na.rm = TRUE)
+
+tapply(NC_pollutants$SO4, NC_pollutants$SITE_ID, mean, na.rm = TRUE)
+tapply(NC_pollutants$SO4, NC_pollutants$SITE_ID, median, na.rm = TRUE)
+tapply(NC_pollutants$SO4, NC_pollutants$SITE_ID, sd, na.rm = TRUE)
+tapply(NC_pollutants$SO4, NC_pollutants$SITE_ID, IQR, na.rm = TRUE)
+
+tapply(NC_pollutants$HNO3, NC_pollutants$SITE_ID, mean, na.rm = TRUE)
+tapply(NC_pollutants$HNO3, NC_pollutants$SITE_ID, median, na.rm = TRUE)
+tapply(NC_pollutants$HNO3, NC_pollutants$SITE_ID, sd, na.rm = TRUE)
+tapply(NC_pollutants$HNO3, NC_pollutants$SITE_ID, IQR, na.rm = TRUE)
+
+tapply(NC_pollutants$NO3, NC_pollutants$SITE_ID, mean, na.rm = TRUE)
+tapply(NC_pollutants$NO3, NC_pollutants$SITE_ID, median, na.rm = TRUE)
+tapply(NC_pollutants$NO3, NC_pollutants$SITE_ID, sd, na.rm = TRUE)
+tapply(NC_pollutants$NO3, NC_pollutants$SITE_ID, IQR, na.rm = TRUE)
 ```
 
+For NH4, the ANOVA results revealed a significant difference between concentrations across sites in North Carolina (F-value = 33.58, df = 4, p-value < 2e-16). The following post-hoc tukey's HSD test revealed a significant difference between NH4 concentrations across all sites (p < 0.01), except Coweeta-Beaufort (p-value = 1.00), Cranberry-Candor (p-value = 0.56), Duke Forest-Candor (p-value = 0.74), and Duke Forest-Cranberry (p-value = 0.0942623). In terms of the measures of central tendency and spread, for Beaufort, the mean is 0.24, the median is 0.24, the standard deviation is 0.08, and the interquartile range is 0.10. For Candor, the mean is 0.31, the median is 0.29, the standard deviation is 0.12, and the interquartile range is 0.12 For Coweeta, the mean is 0.24, the median is 0.23, the standard deviation is 0.08, and the interquartile range is 0.10. For Cranberry, the mean is 0.29, the median is 0.28, the standard deviation is 0.12, and the interquartile range is 0.12. For Duke Forest, the mean is 0.32, the median is 0.31, the standard deviation is 0.10, and the interquartile range is 0.13.
 
+For SO4, the ANOVA results revealed a significant difference between concentrations across sites in North Carolina (F-value = 74.24, df = 4, p-value < 2e-16). The following post-hoc tukey's HSD test revealed a significant difference between SO4 concentrations across all sites (p < 0.01), except Duke Forest-Candor (p-value = 0.82) and Cranberry-Coweeta (p-value = 0.0923024). In terms of the measures of central tendency and spread, for Beaufort, the mean is 1.06, the median is 1.01, the standard deviation is 0.29, and the interquartile range is 0.38. For Candor, the mean is 0.89, the median is 0.86, the standard deviation is 0.25, and the interquartile range is 0.33. For Coweeta, the mean is 0.67, the median is 0.66, the standard deviation is 0.23, and the interquartile range is 0.33. For Cranberry, the mean is 0.75, the median is 0.68, the standard deviation is 0.29, and the interquartile range is 0.33. For Duke Forest, the mean is 0.91, the median is 0.89, the standard deviation is 0.27, and the interquartile range is 0.34.
 
+For HNO3, the Kruskal-Wallis results revealed a significant difference in concentrations across sites in North Carolina  (chi-squared = 596.6, df = 4, p-value < 2.2e-16). The following Dunn's test reveals that the differences between all sites are significant (p < 0.01). In terms of the measures of central tendency and spread, for Beaufort, the mean is 0.28, the median is 0.26, the standard deviation is 0.13, and the interquartile range is 0.16. For Candor, the mean is 0.54, the median is 0.51, the standard deviation is 0.17, and the interquartile range is 0.24 For Coweeta, the mean is 0.25, the median is 0.23, the standard deviation is 0.11, and the interquartile range is 0.15. For Cranberry, the mean is 0.42, the median is 0.41, the standard deviation is 0.16, and the interquartile range is 0.19. For Duke Forest, the mean is 0.71, the median is 0.67, the standard deviation is 0.25, and the interquartile range is 0.31.
 
+For NO3, the Kruskal-Wallis results revealed a significant difference in concentrations across sites in North Carolina  (chi-squared = 497.75, df = 4, p-value < 2.2e-16). The following Dunn's test reveals that the differences between all sites are significant (p < 0.01). In terms of the measures of central tendency and spread, for Beaufort, the mean is 0.74, the median is 0.70, the standard deviation is 0.25, and the interquartile range is 0.29. For Candor, the mean is 0.37, the median is 0.30, the standard deviation is 0.28, and the interquartile range is 0.31. For Coweeta, the mean is 0.17, the median is 0.14, the standard deviation is 0.12, and the interquartile range is 0.14. For Cranberry, the mean is 0.32, the median is 0.29, the standard deviation is 0.23, and the interquartile range is 0.22. For Duke Forest, the mean is 0.43, the median is 0.37, the standard deviation is 0.28, and the interquartile range is 0.33.
+ 
+```{r}
+# Calculating means and standard deviation.
+summary_NH4 <- NC_pollutants %>% 
+  group_by(SITE_ID) %>%
+  summarize(mean = mean(NH4, na.rm = TRUE),
+            sd = sd(NH4, na.rm = TRUE)) %>%
+  ungroup()
 
+summary_SO4 <- NC_pollutants %>% 
+  group_by(SITE_ID) %>%
+  summarize(mean = mean(SO4, na.rm = TRUE),
+            sd = sd(SO4, na.rm = TRUE)) %>%
+  ungroup()
+#variance not large and compare median to mean for explanation of why
 
+# Renaming the "mean" column
+summary_NH4 <- summary_NH4 %>%
+  rename(NH4 = mean)
+
+summary_SO4 <- summary_SO4 %>%
+  rename(SO4 = mean)
+
+# Creating plots to display ANOVA results
+anova1 <- ggplot() +
+  geom_jitter(data = NC_pollutants,
+              aes(x = SITE_ID, y = NH4, color = SITE_ID),
+              alpha = 0.5, size = 0.5) +
+  geom_point(data = summary_NH4,
+             aes(x = SITE_ID, y = NH4, color = SITE_ID), 
+             size = 3) +
+  geom_errorbar(data = summary_NH4,
+                aes(x = SITE_ID,
+                    ymin = NH4-sd,
+                    ymax = NH4+sd,
+                    color = SITE_ID),
+                width = 0.10, size = 1) +
+  scale_color_viridis(discrete = TRUE, option = "E") +  #colorblindness friendly
+  labs(x = "Site ID", 
+       y = "NH4 Concentration (µg/m³)",
+       title = "NH4 Concentration (µg/m³) Across Five Sites in North Carolina: 
+       ANOVA Results"#,
+       #caption = "Figure 6: This scatter plot with summary statistics
+       #displays the NH4 concentration, measured in 
+       #micrograms per cubic meter, across five sites 
+       #in North Carolina. Individual points represent 
+       #observed values while larger points indicate 
+       #group means. Error bars show ±1 standard 
+       #deviation."
+       ) +
+  theme_bw() +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5))
+anova1
+
+anova2 <- ggplot() +
+  geom_jitter(data = NC_pollutants,
+              aes(x = SITE_ID, y = SO4, color = SITE_ID),
+              alpha = 0.5, size = 0.5) +
+  geom_point(data = summary_SO4,
+             aes(x = SITE_ID, y = SO4, color = SITE_ID), 
+             size = 3) +
+  geom_errorbar(data = summary_SO4,
+                aes(x = SITE_ID,
+                    ymin = SO4-sd,
+                    ymax = SO4+sd,
+                    color = SITE_ID),
+                width = 0.10, size = 1) +
+  scale_color_viridis(discrete = TRUE, option = "E") +  #colorblindness friendly
+  labs(x = "Habitat Type", 
+       y = "SO4 Concentration (µg/m³)",
+       title = "SO4 Concentration (µg/m³) Across Five Sites in North Carolina: 
+       ANOVA Results"#,
+       #caption = "Figure 7: This scatter plot with summary statistics
+       #displays SO4 concentration, measured in 
+       #micrograms per cubic meter, across five 
+       #sites in North Carolina. Individual points 
+       #represent observed values while larger 
+       #points indicate group means. Error bars 
+       #show ±1 standard deviation."
+       ) +
+  theme_bw() +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5))
+anova2
+
+# Creating plots to display Kruskal Wallis and Dunn results
+max_HNO3 <- max(NC_pollutants$HNO3, na.rm = TRUE)
+boxplot1 <- ggplot(NC_pollutants, aes(x = SITE_ID, y = HNO3, fill = SITE_ID)) +
+  geom_boxplot(outlier.shape = NA, alpha = 0.7) +
+  geom_jitter(width = 0.2, alpha = 0.4) +
+  stat_summary(fun = mean, 
+               geom = "point", 
+               shape = 23, 
+               size = 3, 
+               fill = "white") +
+  scale_fill_viridis(discrete = TRUE, option = "E") +  #colorblindness friendly 
+  theme_minimal() +
+  labs(
+    title = "Distribution of HNO3 Concentration (µg/m³) by Site",
+    x = "Site ID",
+    y = "HNO3 Concentration (µg/m³)",
+    fill = "Site ID"#,
+    #caption = "Figure 8: This boxplot displays the counts for HNO3 
+    #concentration, measured in micrograms per cubic 
+    #meter, across sites in North Carolina. It includes 
+    #annotations for the Kruskal-Wallis and Dunn's tests 
+    #results."
+    ) +
+  theme(legend.position = "none") +
+  stat_compare_means(method = "kruskal.test", label = "p.format", 
+                     label.x = 2, label.y = max_HNO3+0.4) +
+  annotate("text", x = 4, y = max_HNO3+0.4,
+           label = "All pairwise comparisons: p < 0.01", 
+           size = 4, color = "black", hjust = 0.5) 
+boxplot1
+
+max_NO3 <- max(NC_pollutants$NO3, na.rm = TRUE)
+
+boxplot2 <- ggplot(NC_pollutants, aes(x = SITE_ID, y = NO3, fill = SITE_ID)) +
+  geom_boxplot(outlier.shape = NA, alpha = 0.7) +
+  geom_jitter(width = 0.2, alpha = 0.4) +
+  stat_summary(fun = mean, 
+               geom = "point", 
+               shape = 23, 
+               size = 3, 
+               fill = "white") +
+  scale_fill_viridis(discrete = TRUE, option = "E") +  #colorblindness friendly
+  theme_minimal() +
+  labs(
+    title = "Distribution of NO3 Concentration (µg/m³) by Site",
+    x = "Site ID",
+    y = "NO3 Concentration (µg/m³)",
+    fill = "Site ID"#,
+    #caption = "Figure 9: This boxplot displays the counts for NO3 concentration,
+    #measured in micrograms per cubic meter, across sites in North 
+    #Carolina. It includes annotations for the Kruskal-Wallis and 
+    #Dunn's tests results."
+    ) +
+  theme(legend.position = "none") +
+  stat_compare_means(method = "kruskal.test", label = "p.format", label.x = 2, label.y = max_NO3+0.4) +
+  annotate("text", x = 4, y = max_NO3+0.4,
+           label = "All pairwise comparisons: p < 0.01", 
+           size = 3, color = "black", hjust = 0.5) 
+boxplot2
+```
+
+```{r}
+# Saving plots
+jpeg(filename = "ByndlossIKellerBWilliamsRHist1.jpeg", 
+     width = 2400, height = 1800, res = 300)
+hist1
+dev.off()
+
+jpeg(filename = "ByndlossIKellerBWilliamsRHist2.jpeg", 
+     width = 2400, height = 1800, res = 300)
+hist2
+dev.off()
+
+jpeg(filename = "ByndlossIKellerBWilliamsRHist3.jpeg", 
+     width = 2400, height = 1800, res = 300)
+hist3
+dev.off()
+
+jpeg(filename = "ByndlossIKellerBWilliamsRHist4.jpeg", 
+     width = 2400, height = 1800, res = 300)
+hist4
+dev.off()
+
+jpeg(filename = "ByndlossIKellerBWilliamsRHist5.jpeg", 
+     width = 2400, height = 1800, res = 300)
+hist5
+dev.off()
+
+jpeg(filename = "ByndlossIKellerBWilliamsRAnova1.jpeg", 
+     width = 2400, height = 1800, res = 300)
+anova1
+dev.off()
+
+jpeg(filename = "ByndlossIKellerBWilliamsRAnova2.jpeg", 
+     width = 2400, height = 1800, res = 300)
+anova2
+dev.off()
+
+jpeg(filename = "ByndlossIKellerBWilliamsRBoxplot1.jpeg", 
+     width = 2400, height = 1800, res = 300)
+boxplot1
+dev.off()
+
+jpeg(filename = "ByndlossIKellerBWilliamsRBoxplot2.jpeg", 
+     width = 2400, height = 1800, res = 300)
+boxplot2
+dev.off()
+```
+
+# Additional visualizations
+```{r}
+NC_pollutants_long <- NC_pollutants %>%
+  pivot_longer(cols = -c(SITE_ID), 
+               names_to = "Pollutant", 
+               values_to = "Value")
+
+# Create faceted boxplots
+ggplot(NC_pollutants_long, aes(x = SITE_ID, y = Value)) +
+  geom_boxplot() +
+  theme_minimal() +
+  facet_wrap(~ Pollutant, scales = "free_y") +
+  labs(title = "Pollutant Concentration (µg/m³) by Site in North Carolina",
+       x = "Site ID", y = "Concentration (µg/m³)") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
