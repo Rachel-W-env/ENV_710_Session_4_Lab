@@ -156,6 +156,12 @@ plot(lmm4)
 qqnorm(resid(lmm4), main = "NH4 QQ Plot") 
 summary(lmm4) #Autumn has strong significance, lower concentrations from Summer. It has also been getting lower over the target years. 
 
+par(mfrow = c(2, 2))
+qqnorm(resid(lmm1),main = "SO4 QQ Plot") 
+qqnorm(resid(lmm4), main = "NH4 QQ Plot") 
+qqnorm(resid(lmm2),main = "NO3 QQ Plot")
+qqnorm(resid(lmm3), main = "HNO3 QQ Plot")
+
 #Can say which gases have seasonal effects
 
 ```
