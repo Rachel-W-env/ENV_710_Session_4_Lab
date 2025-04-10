@@ -129,25 +129,25 @@ ggplot(Air_Data_NC) +
 lmm1 <- lmer(SO4 ~ Season + Year + (1|SITE_ID), data=Air_Data_NC)
 AIC(lmm1) #Only gas with normal AIC
 plot(lmm1)
-qqnorm(resid(lmm1)) 
+qqnorm(resid(lmm1),main = "SO4 QQ Plot") 
 summary(lmm1) #Lower in Winter and Autumn than in summer. Decreasing over time in the target years. 
 
 lmm2 <- lmer(NO3 ~ Season + Year + (1|SITE_ID), data=Air_Data_NC)
 AIC(lmm2)
 plot(lmm2)
-qqnorm(resid(lmm2)) 
+qqnorm(resid(lmm2),main = "NO3 QQ Plot") 
 summary(lmm2)#Autumn, winter, and spring all have significantly higher concentrations than in summer. 
 
 lmm3 <- lmer(HNO3 ~ Season + Year + (1|SITE_ID), data=Air_Data_NC)
 AIC(lmm3)
 plot(lmm3)
-qqnorm(resid(lmm3)) 
+qqnorm(resid(lmm3), main = "HNO3 QQ Plot") 
 summary(lmm3) #Shows concentrations are significantly higher in winter and spring than summer
 
 lmm4 <- lmer(NH4 ~ Season + Year + (1|SITE_ID), data=Air_Data_NC)
 AIC(lmm4)
 plot(lmm4)
-qqnorm(resid(lmm4)) 
+qqnorm(resid(lmm4), main = "NH4 QQ Plot") 
 summary(lmm4) #Autumn has strong significance, lower concentrations from Summer. It has also been getting lower over the target years. 
 
 #Can say which gases have seasonal effects
@@ -223,7 +223,7 @@ ggplot(NC_pollutants_long, aes(x = SITE_ID, y = Value)) +
 ```
 
 
-# Spatail Analysis
+# Spatial Analysis
 
 Before conducting an ANOVA, it is important to check if the data meets the necessary assumptions: 1) normally distributed samples values, 2) samples are independent of one another, and 3) population variances are equal.
 
