@@ -25,6 +25,7 @@ library(tidyr)
 library(tibble)
 library(ggpubr)
 library(viridis)
+library(gridExtra)
 ```
 
 
@@ -134,27 +135,29 @@ ggplot(Air_Data_NC) +
 
 lmm1 <- lmer(SO4 ~ Season + Year + (1|SITE_ID), data=Air_Data_NC)
 AIC(lmm1) #Only gas with normal AIC
-plot(lmm1)
+SO4_plot <- plot(lmm1, main="SO4")
 qqnorm(resid(lmm1),main = "SO4 QQ Plot") 
 summary(lmm1) #Lower in Winter and Autumn than in summer. Decreasing over time in the target years. 
 
 lmm2 <- lmer(NO3 ~ Season + Year + (1|SITE_ID), data=Air_Data_NC)
 AIC(lmm2)
-plot(lmm2)
+NO3_plot <- plot(lmm2, main="NO3")
 qqnorm(resid(lmm2),main = "NO3 QQ Plot") 
 summary(lmm2)#Autumn, winter, and spring all have significantly higher concentrations than in summer. 
 
 lmm3 <- lmer(HNO3 ~ Season + Year + (1|SITE_ID), data=Air_Data_NC)
 AIC(lmm3)
-plot(lmm3)
+HNO3_plot <- plot(lmm3, main= "HNO3")
 qqnorm(resid(lmm3), main = "HNO3 QQ Plot") 
 summary(lmm3) #Shows concentrations are significantly higher in winter and spring than summer
 
 lmm4 <- lmer(NH4 ~ Season + Year + (1|SITE_ID), data=Air_Data_NC)
 AIC(lmm4)
-plot(lmm4)
+NH4_plot <- plot(lmm4, main="NH4")
 qqnorm(resid(lmm4), main = "NH4 QQ Plot") 
 summary(lmm4) #Autumn has strong significance, lower concentrations from Summer. It has also been getting lower over the target years. 
+
+grid.arrange(SO4_plot, NH4_plot, NO3_plot, HNO3_plot, nrow= 2)
 
 par(mfrow = c(2, 2))
 qqnorm(resid(lmm1),main = "SO4 QQ Plot") 
