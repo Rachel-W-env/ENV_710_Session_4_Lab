@@ -124,14 +124,6 @@ Air_Data_NC$SITE_ID <- factor(Air_Data_NC$SITE_ID,
 #lmer (concentration ~ Season + Year + 1|SITE_ID,
 #      data=df)
 
-lmtest <- lm(SO4 ~ Season + Year, data=Air_Data_NC)
-summary(lmtest)
-plot(lmtest)
-
-ggplot(Air_Data_NC) +
-  geom_boxplot(aes(x=SITE_ID, y=SO4)) +
-  geom_jitter(aes(x=SITE_ID, y=SO4))
-
 
 lmm1 <- lmer(SO4 ~ Season + Year + (1|SITE_ID), data=Air_Data_NC)
 AIC(lmm1) #Only gas with normal AIC
